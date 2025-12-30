@@ -1,100 +1,84 @@
 Random Stranger Chat — Full-Stack (React + Spring Boot + Redis + WebSockets)
 
 A realtime 1-to-1 anonymous chat app — similar to Omegle, but simpler.
-
-Two users join → backend matches them → they chat instantly → either can skip → both get re-matched.
+Two users join → backend matches them → they chat instantly → either one skips → both get re-matched.
 
 🚀 Tech Stack
+
 🖥️ Frontend
-
 React + TypeScript
-
 STOMP over SockJS (WebSocket client)
-
 Vite
-
-Tailwind UI / Motion animations
+Tailwind UI + Motion animations
 
 🛠 Backend
-
 Spring Boot (WebSocket + STOMP)
-
 Redis (fast matchmaking queue + room tracking)
-
-SimpMessagingTemplate (broadcast messages)
+SimpMessagingTemplate (message broadcasting)
 
 🐳 Deployment
-
 Docker
-
-Render (works well)
-
-Can also use Railway, AWS, etc.
+Render (recommended)
+Railway / AWS / Others supported
 
 📌 High-Level Flow
-
-1️⃣ User opens app → gets a generated userId
+1️⃣ User opens the app → gets a generated userId
 2️⃣ Frontend connects WebSocket → /chat
-3️⃣ Sends: /app/queue/{userId}
+3️⃣ Sends matchmaking request:
+
+/app/queue/{userId}
+
+
 4️⃣ Backend stores queue in Redis and pairs users
-5️⃣ Both users get notified:
+5️⃣ Both users receive:
 
 ROOM:<roomId>
 
 
-6️⃣ Messages sent to:
+6️⃣ Messages are sent:
 
 /app/room/{roomId}
 
 
-7️⃣ Received on:
+7️⃣ Messages are received:
 
 /topic/room/{roomId}
 
 
-8️⃣ If someone closes, refreshes, or presses skip:
+8️⃣ If someone closes, refreshes, or presses Skip:
 
 /app/next/{userId}
 
 
-Backend re-queues the remaining user and finds a new partner.
+Backend instantly finds a new partner.
 
 🧰 Prerequisites
 
 Install:
-
 Java 17+
-
 Node 18+
-
 Maven
-
 Redis (local or hosted)
 
 🏗 Backend Setup (Spring Boot)
+
 1️⃣ Configure Redis
-
-Local:
-
+Run locally
 redis-server
 
-
-Or use a cloud provider (Upstash, Render Redis, etc.).
-
-Set env variable:
+Or use hosted Redis (Upstash / Render / etc.).
+Set environment variable:
 
 REDIS_URL=redis://localhost:6379
 
 2️⃣ Run Backend
 mvn spring-boot:run
 
-
-Verify:
+Verify backend is running:
 
 GET http://localhost:8080/api/health
 
-
-Response:
+Expected:
 
 {
   "status": "OK",
@@ -102,26 +86,32 @@ Response:
 }
 
 💬 WebSocket API Cheat Sheet
-Connect
+🔌 Connect
 /chat
 
-Queue
+🎯 Queue
 
-Client → /app/queue/{userId}
-Server → /topic/queue/{userId}
+Client →
+
+/app/queue/{userId}
+
+
+Server →
+
+/topic/queue/{userId}
 
 Response	Meaning
-WAIT	searching
-ROOM:<id>	connected
-LEFT	partner disconnected
-Messaging
+WAIT	Searching for partner
+ROOM:<id>	Connected
+LEFT	Partner disconnected
+💬 Messaging
 
-Subscribe:
+Subscribe
 
 /topic/room/{roomId}
 
 
-Send:
+Send
 
 /app/room/{roomId}
 
@@ -133,95 +123,89 @@ Payload:
   "content": "Hello!"
 }
 
-Skip
+⏭ Skip
 /app/next/{userId}
 
 🌐 Frontend Setup (React)
 1️⃣ Install dependencies
 npm install
 
-2️⃣ Configure backend URL
+2️⃣ Configure Backend URL
 
-Open:
+Edit:
 
 src/components/ChatInterface.tsx
 
 
-Change WebSocket server if deployed:
+Development:
 
 const socket = new SockJS("http://localhost:8080/chat");
 
 
-Example production:
+Production example:
 
 const socket = new SockJS("https://your-backend.onrender.com/chat");
 
-3️⃣ Run app
+3️⃣ Run Frontend
 npm run dev
 
 
-Open:
+Open in browser:
 
 http://localhost:5173
-);
 
 🐳 Docker (Optional)
-Backend build
+Build backend image
 docker build -t chat-backend .
+
+
+Run container:
+
 docker run -p 8080:8080 -e REDIS_URL=redis://host.docker.internal:6379 chat-backend
 
 ☁️ Deploy on Render (Recommended)
-Backend
+🔙 Backend
 
 1️⃣ Create → Web Service
-2️⃣ Choose your repo
-3️⃣ Use Dockerfile
-4️⃣ Add env vars:
+2️⃣ Select repository
+3️⃣ Select Dockerfile
+4️⃣ Add environment variable:
 
-REDIS_URL=<redis connection>
+REDIS_URL=<your redis connection string>
 
 
 Deploy 🎉
 
-Frontend
+🎨 Frontend
 
 1️⃣ Create → Static Site
 2️⃣ Build command:
 
 npm run build
 
+3️⃣ Publish folder:
+/dist
 
-3️⃣ Publish /dist
-
-4️⃣ Set backend URL in code before building.
+4️⃣ Ensure backend URL in code points to production backend.
 
 🤝 Contributing
-
-Pull requests welcome — especially:
-
-Better UI
-
-Mobile UI improvements
-
+Contributions welcome — ideas include:
+UI improvements
 Typing indicators
-
-Anti-spam features
-
+Mobile layout enhancements
+Spam / abuse protection
 Multi-language support
 
 🐞 Troubleshooting
-❌ “Connecting forever”
-
-Check WebSocket URL
-Ensure backend allows origin 5173
-
+❌ Stuck on “Connecting…”
+✔ Check WebSocket URL
+✔ Backend must allow origin 5173
 ❌ Messages not delivered
-
-Check both users share same roomId.
-
+✔ Both users must share the same roomId.
 ❌ Skip not working
 
-Ensure /app/next/{userId} publishes.
+✔ Ensure:
+/app/next/{userId}
 
 📜 License
 
